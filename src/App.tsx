@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { VoiceProvider, useVoice, VoiceReadyState } from "@humeai/voice-react";
+import { HumeConfigSelector } from "./components/HumeConfigSelector";
+import type { PresetConfig } from "./components/HumeConfigSelector";
+import { createTicTacToeConfig } from "./utils/ticTacToeConfig";
 
-// Hardcoded preset configurations
-const PRESET_CONFIGS = [
+// Hardcoded preset configurations for tic-tac-toe
+const PRESET_CONFIGS: PresetConfig[] = [
   {
     id: "180d4963-746d-4411-a7b3-94408c1ea1c1",
     name: "Voice Tic-Tac-Toe 4o-mini",
@@ -29,154 +32,6 @@ const PRESET_CONFIGS = [
     description: "EVI2 - claude-3-7-sonnet-latest"
   }
 ];
-
-interface UserConfig {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface ConfigSelectorProps {
-  configMode: 'preset' | 'api-key';
-  setConfigMode: (mode: 'preset' | 'api-key') => void;
-  selectedPresetId: string;
-  setSelectedPresetId: (id: string) => void;
-  apiKey: string;
-  setApiKey: (key: string) => void;
-  selectedConfigId: string;
-  setSelectedConfigId: (id: string) => void;
-  userConfigs: UserConfig[];
-  isLoggedIn: boolean;
-  onLogin: () => void;
-  onAutoCreateConfig: () => void;
-  isCreatingConfig: boolean;
-}
-
-const ConfigSelector: React.FC<ConfigSelectorProps> = ({ 
-  configMode, 
-  setConfigMode, 
-  selectedPresetId, 
-  setSelectedPresetId,
-  apiKey, 
-  setApiKey,
-  selectedConfigId,
-  setSelectedConfigId,
-  userConfigs,
-  isLoggedIn,
-  onLogin,
-  onAutoCreateConfig,
-  isCreatingConfig
-}) => (
-  <div style={{ margin: '1em 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-    <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-      <label>
-        <input 
-          type="radio" 
-          checked={configMode === 'preset'} 
-          onChange={() => setConfigMode('preset')} 
-        />
-        Use Preset Configuration
-      </label>
-      <label>
-        <input 
-          type="radio" 
-          checked={configMode === 'api-key'} 
-          onChange={() => setConfigMode('api-key')} 
-        />
-        Provide Your API Key
-      </label>
-    </div>
-
-    {configMode === 'preset' && (
-      <div style={{ marginLeft: '1em' }}>
-        <select 
-          value={selectedPresetId} 
-          onChange={e => setSelectedPresetId(e.target.value)}
-          style={{ padding: '0.5em', minWidth: '300px' }}
-        >
-          <option value="">Select a preset configuration...</option>
-          {PRESET_CONFIGS.map(config => (
-            <option key={config.id} value={config.id}>
-              {config.name} - {config.description}
-            </option>
-          ))}
-        </select>
-      </div>
-    )}
-
-    {configMode === 'api-key' && (
-      <div style={{ marginLeft: '1em', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            type="password"
-            placeholder="Enter your Hume API Key"
-            value={apiKey}
-            onChange={e => setApiKey(e.target.value)}
-            style={{ padding: '0.5em', minWidth: '300px' }}
-            disabled={isLoggedIn}
-          />
-          {!isLoggedIn && (
-            <button 
-              onClick={onLogin}
-              disabled={!apiKey.trim()}
-              style={{ padding: '0.5em 1em' }}
-            >
-              Login
-            </button>
-          )}
-        </div>
-
-        {isLoggedIn && (
-          <>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <select 
-                value={selectedConfigId} 
-                onChange={e => {
-                  if (e.target.value === '__CREATE_NEW__') {
-                    onAutoCreateConfig();
-                  } else {
-                    setSelectedConfigId(e.target.value);
-                  }
-                }}
-                style={{ padding: '0.5em', minWidth: '300px' }}
-                disabled={isCreatingConfig}
-              >
-                <option value="">Select a configuration...</option>
-                <option value="__CREATE_NEW__" style={{ fontWeight: 'bold', color: '#007bff' }}>
-                  ➕ Create new tic-tac-toe config
-                </option>
-                {userConfigs.map(config => (
-                  <option key={config.id} value={config.id}>
-                    {config.name} {config.description && `- ${config.description}`}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {isCreatingConfig && (
-              <div style={{ marginTop: '0.5em', padding: '0.5em', backgroundColor: '#f8f9fa', borderRadius: '4px', fontSize: '0.9em' }}>
-                🔄 Creating your tic-tac-toe configuration...
-              </div>
-            )}
-
-            {selectedConfigId && selectedConfigId !== '__CREATE_NEW__' && (
-              <div style={{ marginTop: '0.5em' }}>
-                <a 
-                  href={`https://platform.hume.ai/evi/playground?configId=${selectedConfigId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: '#007bff', textDecoration: 'none' }}
-                >
-                  📝 Edit this config in the playground →
-                </a>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    )}
-  </div>
-);
 
 const Controls = ({ userName, onUserNameChange }: { userName: string; onUserNameChange: (name: string) => void }) => {
   const { connect, disconnect, readyState, mute, unmute, isMuted } = useVoice();
@@ -350,197 +205,6 @@ const Messages = () => {
     </div>
   );
 };
-
-
-
-function useNewConfigSystem() {
-  const [configMode, setConfigMode] = useState<'preset' | 'api-key'>(() => 
-    localStorage.getItem('configMode') as 'preset' | 'api-key' || 'preset'
-  );
-  const [selectedPresetId, setSelectedPresetId] = useState(() => 
-    localStorage.getItem('selectedPresetId') || PRESET_CONFIGS[0]?.id || ''
-  );
-  const [apiKey, setApiKey] = useState(() => 
-    localStorage.getItem('userApiKey') || ''
-  );
-  const [selectedConfigId, setSelectedConfigId] = useState(() => 
-    localStorage.getItem('selectedConfigId') || ''
-  );
-  const [userConfigs, setUserConfigs] = useState<UserConfig[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isCreatingConfig, setIsCreatingConfig] = useState(false);
-
-  useEffect(() => { localStorage.setItem('configMode', configMode); }, [configMode]);
-  useEffect(() => { localStorage.setItem('selectedPresetId', selectedPresetId); }, [selectedPresetId]);
-  useEffect(() => { localStorage.setItem('userApiKey', apiKey); }, [apiKey]);
-  useEffect(() => { localStorage.setItem('selectedConfigId', selectedConfigId); }, [selectedConfigId]);
-
-  const fetchUserConfigs = useCallback(async () => {
-    if (!apiKey.trim()) return;
-    
-    try {
-      // Using Hume API to fetch user configs
-      const response = await fetch('https://api.hume.ai/v0/evi/configs', {
-        headers: {
-          'X-Hume-Api-Key': apiKey,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch configs: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      const configs = data.configs_page?.map((config: any) => ({
-        id: config.id,
-        name: config.name || `Config ${config.id}`,
-        description: `EVI${config.evi_version || 'Unknown'} - ${config.language_model?.model_resource || 'Default Model'}`
-      })) || [];
-      
-      setUserConfigs(configs);
-      setIsLoggedIn(true);
-    } catch (error) {
-      console.error('Failed to fetch user configs:', error);
-      alert('Failed to login. Please check your API key.');
-      setIsLoggedIn(false);
-    }
-  }, [apiKey]);
-
-  const autoCreateConfig = useCallback(async () => {
-    if (!apiKey.trim()) return;
-    
-    setIsCreatingConfig(true);
-    setSelectedConfigId('');
-    try {
-      // Step 1: Create the tool first
-      const toolSchema = {
-        type: "object",
-        required: ["type"],
-        properties: {
-          type: {
-            type: "string",
-            enum: ["move", "new_game"]
-          },
-          move: {
-            type: "object",
-            properties: {
-              who: {
-                type: "string",
-                enum: ["player", "computer"]
-              },
-              where: {
-                type: "string",
-                enum: [
-                  "top left", "top", "top right",
-                  "left", "center", "right",
-                  "bottom left", "bottom", "bottom right"
-                ]
-              }
-            },
-            required: ["who", "where"]
-          }
-        }
-      };
-
-      // Create unique tool name to avoid conflicts
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/[-:]/g, '');
-      const toolName = `tic_tac_toe_move_${timestamp}`;
-
-      const toolResponse = await fetch('https://api.hume.ai/v0/evi/tools', {
-        method: 'POST',
-        headers: {
-          'X-Hume-Api-Key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: toolName,
-          description: "Make a move in tic-tac-toe or start a new game",
-          parameters: JSON.stringify(toolSchema)
-        })
-      });
-
-      if (!toolResponse.ok) {
-        throw new Error(`Failed to create tool: ${toolResponse.status} ${await toolResponse.text()}`);
-      }
-
-      const tool = await toolResponse.json();
-
-      // Step 2: Create the config referencing the tool by ID
-      const configData = {
-        name: "Voice Tic-Tac-Toe Config",
-        prompt: {
-          text: `You are EVI, a tic-tac-toe-playing conversational voice interface
-
-<capabilities>
-  <capability>You play each game either as X or O (always clarify who is who before moving)</capability>
-  <capability>Describe board state clearly</capability>
-  <capability>Make strategic moves via ${toolName} tool</capability>
-</capabilities>
-
-<behavior>
-  <trait>Conversational and encouraging</trait>
-  <trait>Trust tools to enforce ALL game rules</trait>
-  <trait>Report ALL error messages verbatim to user</trait>
-  <trait>Execute user moves without questioning legality</trait>
-</behavior>
-
-<constraints>
-  <constraint>Never dismiss errors as jokes</constraint>
-  <constraint>Use ${toolName} for all game actions</constraint>
-  <constraint>Pass user requests directly to tool - no rule validation</constraint>
-</constraints>`
-        },
-        tools: [{ id: tool.id }] // Reference the tool by ID
-      };
-
-      const configResponse = await fetch('https://api.hume.ai/v0/evi/configs', {
-        method: 'POST',
-        headers: {
-          'X-Hume-Api-Key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(configData)
-      });
-
-      if (!configResponse.ok) {
-        throw new Error(`Failed to create config: ${configResponse.status} ${await configResponse.text()}`);
-      }
-
-      const newConfig = await configResponse.json();
-      const configToAdd = {
-        id: newConfig.id,
-        name: newConfig.name,
-        description: 'Auto-created tic-tac-toe config'
-      };
-      
-      setUserConfigs(prev => [configToAdd, ...prev]);
-      setSelectedConfigId(newConfig.id);
-      
-    } catch (error) {
-      console.error('Failed to create config:', error);
-      alert(`Failed to create config: ${error instanceof Error ? error.message : 'Please try again.'}`);
-    } finally {
-      setIsCreatingConfig(false);
-    }
-  }, [apiKey]);
-
-  return {
-    configMode,
-    setConfigMode,
-    selectedPresetId,
-    setSelectedPresetId,
-    apiKey,
-    setApiKey,
-    selectedConfigId,
-    setSelectedConfigId,
-    userConfigs,
-    isLoggedIn,
-    fetchUserConfigs,
-    autoCreateConfig,
-    isCreatingConfig
-  };
-}
 
 function useAccessToken(enabled: boolean) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -813,8 +477,12 @@ const GameManager: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const config = useNewConfigSystem();
-  const { accessToken, loading: tokenLoading, error: tokenError } = useAccessToken(config.configMode === 'preset');
+  const [selectedConfig, setSelectedConfig] = useState<{
+    configId: string;
+    authType: 'preset' | 'api-key';
+    apiKey?: string;
+  } | null>(null);
+  
   const [userName, setUserName] = useState(() => localStorage.getItem('userName') || '');
 
   // Save userName to localStorage whenever it changes
@@ -822,40 +490,47 @@ const App: React.FC = () => {
     localStorage.setItem('userName', userName);
   }, [userName]);
 
-  if (config.configMode === 'preset' && tokenLoading) return <div>Loading voice access...</div>;
-  if (config.configMode === 'preset' && tokenError) return <div>Error: {tokenError}</div>;
+  // Fetch access token for preset configs
+  const { accessToken, loading: tokenLoading, error: tokenError } = useAccessToken(
+    selectedConfig?.authType === 'preset'
+  );
 
-  // Determine the config ID to use
-  const configId = config.configMode === 'preset' 
-    ? config.selectedPresetId 
-    : config.selectedConfigId;
+  // Show loading state for preset configs
+  if (selectedConfig?.authType === 'preset' && tokenLoading) {
+    return <div>Loading voice access...</div>;
+  }
+  
+  if (selectedConfig?.authType === 'preset' && tokenError) {
+    return <div>Error: {tokenError}</div>;
+  }
 
   // Determine the auth method
-  const auth = config.configMode === 'preset' 
-    ? { type: 'accessToken' as const, value: accessToken! }
-    : { type: 'apiKey' as const, value: config.apiKey };
+  const auth = selectedConfig
+    ? selectedConfig.authType === 'preset'
+      ? { type: 'accessToken' as const, value: accessToken! }
+      : { type: 'apiKey' as const, value: selectedConfig.apiKey! }
+    : null;
 
   return (
     <div style={{ padding: '2em', maxWidth: '800px', margin: '0 auto' }}>
       <h1>Voice Tic-Tac-Toe</h1>
-      <ConfigSelector 
-        configMode={config.configMode}
-        setConfigMode={config.setConfigMode}
-        selectedPresetId={config.selectedPresetId}
-        setSelectedPresetId={config.setSelectedPresetId}
-        apiKey={config.apiKey}
-        setApiKey={config.setApiKey}
-        selectedConfigId={config.selectedConfigId}
-        setSelectedConfigId={config.setSelectedConfigId}
-        userConfigs={config.userConfigs}
-        isLoggedIn={config.isLoggedIn}
-        onLogin={config.fetchUserConfigs}
-        onAutoCreateConfig={config.autoCreateConfig}
-        isCreatingConfig={config.isCreatingConfig}
+      
+      <HumeConfigSelector
+        presetConfigs={PRESET_CONFIGS}
+        onConfigSelected={(configId, authType, apiKey) => {
+          setSelectedConfig({ configId, authType, apiKey });
+        }}
+        autoCreateConfig={{
+          enabled: true,
+          createConfig: createTicTacToeConfig,
+          configName: 'tic-tac-toe config'
+        }}
+        persistenceKey="ticTacToeConfig"
       />
-      {configId && (
+      
+      {selectedConfig && auth && (
         <VoiceProvider
-          configId={configId}
+          configId={selectedConfig.configId}
           auth={auth}
         >
           <Controls userName={userName} onUserNameChange={setUserName} />
@@ -864,7 +539,8 @@ const App: React.FC = () => {
           <GameManager />
         </VoiceProvider>
       )}
-      {!configId && (
+      
+      {!selectedConfig && (
         <div style={{ padding: '1em', textAlign: 'center', color: '#666' }}>
           Please select a configuration to start playing.
         </div>
