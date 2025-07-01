@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun index.html",
-    "build": "bun build index.html --outdir ./public --define 'process.env.HUME_ACCESS_TOKEN_URL=\"$HUME_ACCESS_TOKEN_URL\"'"
+    "build": "node build.cjs"
   },
   "devDependencies": {
     "@types/bun": "latest"
