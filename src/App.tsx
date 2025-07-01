@@ -163,22 +163,41 @@ const ConfigSelector: React.FC<ConfigSelectorProps> = ({
   </div>
 );
 
-const Controls = () => {
+const Controls = ({ userName, onUserNameChange }: { userName: string; onUserNameChange: (name: string) => void }) => {
   const { connect, disconnect, readyState, mute, unmute, isMuted } = useVoice();
   return (
-    <div style={{ display: 'flex', gap: 8 }}>
-      {readyState === VoiceReadyState.OPEN ? (
-        <>
-          <button onClick={disconnect}>End Session</button>
-          {isMuted ? (
-            <button onClick={unmute}>Unmute</button>
-          ) : (
-            <button onClick={mute}>Mute</button>
-          )}
-        </>
-      ) : (
-        <button onClick={() => connect()}>Start EVI Chat</button>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <label htmlFor="userName" style={{ fontWeight: 'bold' }}>Your Name:</label>
+        <input
+          id="userName"
+          type="text"
+          placeholder="Enter your name"
+          value={userName}
+          onChange={(e) => onUserNameChange(e.target.value)}
+          style={{ 
+            padding: '0.5em', 
+            minWidth: '200px',
+            border: '1px solid #ccc',
+            borderRadius: '4px'
+          }}
+          disabled={readyState === VoiceReadyState.OPEN}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {readyState === VoiceReadyState.OPEN ? (
+          <>
+            <button onClick={disconnect}>End Session</button>
+            {isMuted ? (
+              <button onClick={unmute}>Unmute</button>
+            ) : (
+              <button onClick={mute}>Mute</button>
+            )}
+          </>
+        ) : (
+          <button onClick={() => connect()}>Start EVI Chat</button>
+        )}
+      </div>
     </div>
   );
 };
@@ -659,6 +678,24 @@ const TicTacToeBoard: React.FC<{ board: string[][] }> = ({ board }) => {
   );
 };
 
+const NameContextManager: React.FC<{ userName: string }> = ({ userName }) => {
+  const { sendSessionSettings, readyState } = useVoice();
+  
+  useEffect(() => {
+    if (readyState === VoiceReadyState.OPEN && userName.trim()) {
+      sendSessionSettings({
+        type: "session_settings",
+        context: {
+          text: `The user's name is ${userName.trim()}. Please address them by their name when appropriate and remember this throughout our conversation.`,
+          type: "persistent"
+        }
+      });
+    }
+  }, [userName, readyState, sendSessionSettings]);
+
+  return null; // This component doesn't render anything
+};
+
 const GameManager: React.FC = () => {
   const { sendToolMessage } = useVoice();
   const [board, setBoard] = useState<string[][]>(() => emptyBoard());
@@ -763,6 +800,12 @@ const GameManager: React.FC = () => {
 const App: React.FC = () => {
   const config = useNewConfigSystem();
   const { accessToken, loading: tokenLoading, error: tokenError } = useAccessToken(config.configMode === 'preset');
+  const [userName, setUserName] = useState(() => localStorage.getItem('userName') || '');
+
+  // Save userName to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('userName', userName);
+  }, [userName]);
 
   if (config.configMode === 'preset' && tokenLoading) return <div>Loading voice access...</div>;
   if (config.configMode === 'preset' && tokenError) return <div>Error: {tokenError}</div>;
@@ -800,7 +843,8 @@ const App: React.FC = () => {
           configId={configId}
           auth={auth}
         >
-          <Controls />
+          <Controls userName={userName} onUserNameChange={setUserName} />
+          <NameContextManager userName={userName} />
           <Messages />
           <GameManager />
         </VoiceProvider>
