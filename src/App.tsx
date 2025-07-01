@@ -361,7 +361,7 @@ function useNewConfigSystem() {
       const configs = data.configs_page?.map((config: any) => ({
         id: config.id,
         name: config.name || `Config ${config.id}`,
-        description: `EVI${config.evi_version || config.eviVersion || 'Unknown'} - ${config.language_model?.model_name || config.languageModel?.model_name || config.language_model?.model || config.languageModel?.model || 'Default Model'}`
+        description: `EVI${config.evi_version || 'Unknown'} - ${config.language_model?.model_resource || 'Default Model'}`
       })) || [];
       
       setUserConfigs(configs);
