@@ -1,0 +1,27 @@
+{
+  "name": "voice-tic-tac-toe",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun index.html",
+    "build": "bun build index.html --outdir ./dist",
+    "upsert-config": "bun run upsert-config.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@humeai/voice": "0.1.10",
+    "@humeai/voice-react": "^0.1.22",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "hume": "^0.9.1",
+    "react": "18",
+    "react-dom": "18",
+    "typescript": "^5.0.0"
+  }
+}
