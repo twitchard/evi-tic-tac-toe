@@ -4,14 +4,29 @@ import { VoiceProvider, useVoice, VoiceReadyState } from "@humeai/voice-react";
 // Hardcoded preset configurations
 const PRESET_CONFIGS = [
   {
-    id: "9e88321b-4c71-4189-a7d2-9855e7c6a891",
-    name: "Richard's EVI 2 Config",
-    description: "Conversational tic-tac-toe player using EVI 2"
+    id: "180d4963-746d-4411-a7b3-94408c1ea1c1",
+    name: "Voice Tic-Tac-Toe 4o-mini",
+    description: "EVI3 - gpt-4o-mini"
   },
   {
-    id: "9e88321b-4c71-4189-a7d2-9855e7c6a891", // Update with actual EVI 3 config ID
-    name: "Richard's EVI 3 Config", 
-    description: "Enhanced tic-tac-toe player using EVI 3"
+    id: "81d03945-407e-44e9-b771-211700c597d0",
+    name: "Voice Tic-Tac-Toe EVI 2",
+    description: "EVI2 - claude-3-7-sonnet-latest"
+  },
+  {
+    id: "9e88321b-4c71-4189-a7d2-9855e7c6a891",
+    name: "Voice Tic-Tac-Toe Sonnet",
+    description: "EVI3 - claude-3-7-sonnet-latest"
+  },
+  {
+    id: "af48e97e-7027-47e4-9ba3-e83b70647576",
+    name: "Voice Tic-Tac-Toe Gemini 2.0 flash",
+    description: "EVI3 - gemini-2.0-flash"
+  },
+  {
+    id: "4cefd3dd-70c4-44c6-9579-4e95a9077de6",
+    name: "storytelling genre switcher",
+    description: "EVI2 - claude-3-7-sonnet-latest"
   }
 ];
 
